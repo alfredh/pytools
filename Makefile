@@ -1,6 +1,5 @@
-#! /usr/bin/env python
 #
-# ccheck.py  Code Checker
+# Makefile
 #
 # Copyright (C) 2005 - 2009 Alfred E. Heggestad
 #
@@ -9,7 +8,12 @@
 #    published by the Free Software Foundation.
 #
 
+TOOLS	:= ccheck.py
+DEST	:= /usr/local/bin
 
-version = "0.2.0";
+default:
+	@echo "run 'make install'"
 
-
+install:
+	@mkdir -p $(DEST)
+	@install -m 755 $(TOOLS) $(DEST)
