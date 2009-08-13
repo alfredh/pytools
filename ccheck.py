@@ -232,3 +232,6 @@ else:
 # done - print stats
 #
 print_stats()
+
+
+exit(errors != 0)
