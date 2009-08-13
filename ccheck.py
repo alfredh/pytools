@@ -74,7 +74,7 @@ def check_whitespace(line, len):
 
     # make sure TAB is used for indentation
     for n in range(4, 9, 4):
-        if line[0:n] == ' '*n and line[n] != ' ':
+        if len > n and line[0:n] == ' '*n and line[n] != ' ':
             error("starts with %d spaces, use tab instead" % n)
 
 
@@ -101,7 +101,7 @@ def check_whitespace2(line, len):
 #
 def build_file_list():
     for e in extensions:
-        cmd = "find . -name \"*." + e + "\""
+        cmd = "find . -type f -name \"*." + e + "\""
         out = Popen(cmd, stdout=PIPE, shell=True).communicate()[0]
         files[e] = out.split()
 
@@ -116,7 +116,7 @@ def process(line):
 
 
 def parse_file(filename):
-    #print "parsing " + filename
+    print "parsing " + filename
     file = open(filename)
 
     global cur_filename, cur_lineno
