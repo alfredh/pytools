@@ -120,6 +120,18 @@ def check_c_preprocessor(line, len):
             error("C++ comment, use C comments /* ... */ instead")
 
 
+#
+# check that hexadecimal numbers are lowercase
+#
+def check_hex_lowercase(line, len):
+
+    m = re.search('0x([0-9A-Fa-f]+)', line)
+    if m:
+        a = m.group(1)
+        if re.search('[A-F]+', a):
+            error("0x%s should be lowercase" % a)
+        
+
 
 
 #
@@ -147,6 +159,7 @@ def process(line):
     check_whitespace2(line, line_len)
     check_termination(line, line_len)
     check_c_preprocessor(line, line_len)
+    check_hex_lowercase(line, line_len)
     
 
 def parse_file(filename):
