@@ -230,6 +230,24 @@ def parse_any_file(f):
 
 
 #
+# print usage
+#
+def usage():
+    print "ccheck version " + version
+    print ""
+    print "Usage:"
+    print ""
+    print "  ccheck [options]"
+    print ""
+    print "options:"
+    print ""
+    print "  --help     Display help"
+    print "  --verbose  Verbose output"
+    print "  --quiet    Only print warnings"
+    print "  --exclude  Exclude pattern(s)"
+
+
+#
 # main program
 #
 
@@ -240,6 +258,9 @@ for e in extensions:
 
 
 if len(sys.argv) > 1:
+    if sys.argv[1] == '--help':
+        usage()
+        exit(2)
     for f in sys.argv[1:]:
         print "checking: " + f
         if os.path.isdir(f):
