@@ -167,13 +167,26 @@ def check_brackets(line, len):
 #
 
 
+"""
+Function that does a simplified recursive globbing,
+and returns a list of matches.
+"""
+def rec_quasiglob(top, patterns):
+    for root, dirs, files in os.walk(top, topdown=False):
+        for file in files:
+            for pattern in patterns:
+                if fnmatch.fnmatch(file, pattern):
+                    path = os.path.join(root, file)
+                    parse_any_file(path)
+
+
 #
 # scan all files of extensions .xyz
 # parse all files
 #
-def build_file_list():
+def build_file_list(top):
     for e in extensions:
-        files[e] = rec_quasiglob('.', ['*.' + e])
+        rec_quasiglob(top, ['*.' + e])
 
 
 def process(line):
@@ -206,18 +219,14 @@ def parse_file(filename):
             process(line)
 
 
-"""
-Function that does a simplified recursive globbing,
-and returns a list of matches.
-"""
-def rec_quasiglob(top, patterns):
-    file_list = []
-    for root, dirs, files in os.walk(top, topdown=False):
-        for file in files:
-            for pattern in patterns:
-                if fnmatch.fnmatch(file, pattern):
-                    file_list.append(os.path.join(root, file))
-    return file_list
+def parse_any_file(f):
+#    print "parse_any_file: " + f
+    for e in extensions:
+        if fnmatch.fnmatch(f, '*.' + e):
+            files[e].append(f)
+            parse_file(f)
+            return
+    print "unknown extension: " + f
 
 
 #
@@ -228,24 +237,23 @@ def rec_quasiglob(top, patterns):
 # empty dict
 for e in extensions:
     files[e] = []
-    
+
 
 if len(sys.argv) > 1:
     for f in sys.argv[1:]:
-        for e in extensions:
-            if fnmatch.fnmatch(f, '*.' + e):
-                files[e].append(f)
-        parse_file(f)
+        print "checking: " + f
+        if os.path.isdir(f):
+            print "is a dir: + " + f
+            build_file_list(f)
+        elif os.path.isfile(f):
+            parse_any_file(f)
+        else:
+            print "unknown file type: " + f
 else:
-    # scan recurs
+    # scan all files recursively
     print "building file list.."
-    build_file_list()    
+    build_file_list('.')    
 
-    for e in extensions:
-        print "----- scanning files: *." + e + " -----"
-        for f in files[e]:
-            pass
-            parse_file(f)
 
 
 #
