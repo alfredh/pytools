@@ -132,6 +132,29 @@ def check_hex_lowercase(line, len):
             error("0x%s should be lowercase" % a)
         
 
+#
+# check for correct brackets usage in C/C++
+#
+def check_brackets(line, len):
+
+    operators = ["do", "if", "for", "while", "switch"]
+
+#    return if (m/^\#if/); # skip macros
+
+    m = re.search('\W*(\w+\W*)\(', line)
+    if m:
+        keyword = m.group(1)
+
+#      return if ($keyword =~ m/\(/);
+
+        if keyword.strip() in operators:
+            if not re.search('[ ]{1}', keyword):
+                error("no single space after operator '%s()'" % keyword);
+
+    # check that else statements do not have preceeding
+    # end-bracket on the same line
+    if re.search('\s*\}\s*else', line):
+        error("else: ending if bracket should be on previous line");
 
 
 #
@@ -160,6 +183,7 @@ def process(line):
     check_termination(line, line_len)
     check_c_preprocessor(line, line_len)
     check_hex_lowercase(line, line_len)
+    check_brackets(line, line_len)
     
 
 def parse_file(filename):
