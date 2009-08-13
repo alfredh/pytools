@@ -135,6 +135,8 @@ def check_hex_lowercase(line, len):
 #
 # check for correct brackets usage in C/C++
 #
+# TODO: this is too slow, optimize
+#
 def check_brackets(line, len):
 
     operators = ["do", "if", "for", "while", "switch"]
@@ -145,16 +147,16 @@ def check_brackets(line, len):
     if m:
         keyword = m.group(1)
 
-#      return if ($keyword =~ m/\(/);
+#      return if ($keyword =~ m/\(/)
 
         if keyword.strip() in operators:
             if not re.search('[ ]{1}', keyword):
-                error("no single space after operator '%s()'" % keyword);
+                error("no single space after operator '%s()'" % keyword)
 
     # check that else statements do not have preceeding
     # end-bracket on the same line
     if re.search('\s*\}\s*else', line):
-        error("else: ending if bracket should be on previous line");
+        error("else: ending if bracket should be on previous line")
 
 
 #
