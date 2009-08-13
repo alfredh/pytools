@@ -8,10 +8,13 @@
 #    it under the terms of the GNU General Public License version 2 as
 #    published by the Free Software Foundation.
 #
+# Contributors:
+#
+#    Haavard Wik Thorkildssen <havard.thorkildssen@telio.ch>
+#
 
 import sys, os, re
-import fileinput
-from subprocess import *
+import os, fnmatch
 
 # config
 version = '0.1.0'
@@ -170,9 +173,7 @@ def check_brackets(line, len):
 #
 def build_file_list():
     for e in extensions:
-        cmd = "find . -type f -name \"*." + e + "\""
-        out = Popen(cmd, stdout=PIPE, shell=True).communicate()[0]
-        files[e] = out.split()
+        files[e] = rec_quasiglob('.', ['*.' + e])
 
 
 def process(line):
@@ -205,28 +206,47 @@ def parse_file(filename):
             process(line)
 
 
+"""
+Function that does a simplified recursive globbing,
+and returns a list of matches.
+"""
+def rec_quasiglob(top, patterns):
+    file_list = []
+    for root, dirs, files in os.walk(top, topdown=False):
+        for file in files:
+            for pattern in patterns:
+                if fnmatch.fnmatch(file, pattern):
+                    file_list.append(os.path.join(root, file))
+    return file_list
+
+
 #
 # main program
 #
 
 
+# empty dict
+for e in extensions:
+    files[e] = []
+    
+
 if len(sys.argv) > 1:
-    for line in fileinput.input():
-        if fileinput.isfirstline():
-            print "scanning " + fileinput.filename()
-        process(line)
+    for f in sys.argv[1:]:
+        for e in extensions:
+            if fnmatch.fnmatch(f, '*.' + e):
+                files[e].append(f)
+        parse_file(f)
 else:
     # scan recurs
     print "building file list.."
     build_file_list()    
 
-    print "scanning .."
     for e in extensions:
+        print "----- scanning files: *." + e + " -----"
         for f in files[e]:
             pass
             parse_file(f)
 
-    
 
 #
 # done - print stats
