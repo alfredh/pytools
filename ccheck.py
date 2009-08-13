@@ -29,7 +29,7 @@ empty_lines_count = 0
 #
 def error(msg):
     global errors
-    print "%s:%d: %s" % (fileinput.filename(), fileinput.lineno(), msg)
+    print "%s:%d: %s" % (fileinput.filename(), fileinput.filelineno(), msg)
     errors += 1
 
 
