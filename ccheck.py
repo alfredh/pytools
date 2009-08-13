@@ -12,13 +12,19 @@
 #
 #    Haavard Wik Thorkildssen <havard.thorkildssen@telio.ch>
 #
+#
+# TODO:
+# - benchmark against ccheck.pl
+# - add mapping for file ext to types of test
+# - object oriented: make a class ccheck
+#
 
 import sys, os, re
 import os, fnmatch
 
 # config
 version = '0.1.0'
-extensions = ['c', 'h']
+extensions = ['c', 'h', 'mk', 'cpp']
 
 # global variables
 files = {}
@@ -189,21 +195,48 @@ def build_file_list(top):
         rec_quasiglob(top, ['*.' + e])
 
 
-def process(line):
+# mapping:
+#
+#   C-files:        .c
+#   Header files:   .h  .hh
+#   C++ files:      .cpp .cc
+#   Makefiles:      Makefile, mk, mak
+#
+#
+
+common_checks = [check_whitespace, check_whitespace2,
+                 check_termination, check_hex_lowercase]
+
+mapping = {
+    'c':    [check_brackets, check_c_preprocessor],
+    'cpp':  [check_brackets],
+    'h':    [check_brackets],
+    'mk':   [],
+    }
+
+
+for k, v in mapping.iteritems():
+    print "mapping of *." + k + ":",  v
+
+
+def process(line, funcs):
     # chomp
     line = line.rstrip('\n')
     line_len = len(line)
 
-    check_whitespace(line, line_len)
-    check_whitespace2(line, line_len)
-    check_termination(line, line_len)
-    check_c_preprocessor(line, line_len)
-    check_hex_lowercase(line, line_len)
-    check_brackets(line, line_len)
+    for func in common_checks:
+        func(line, line_len)
+
+    for func in funcs:
+        func(line, line_len)
+    
     
 
-def parse_file(filename):
+def parse_file(filename, ext):
     #print "parsing " + filename
+
+    funcs = mapping[e]
+    
     file = open(filename)
 
     global cur_filename, cur_lineno
@@ -216,7 +249,7 @@ def parse_file(filename):
         cur_lineno = 0
         for line in lines:
             cur_lineno += 1
-            process(line)
+            process(line, funcs)
 
 
 def parse_any_file(f):
@@ -224,7 +257,7 @@ def parse_any_file(f):
     for e in extensions:
         if fnmatch.fnmatch(f, '*.' + e):
             files[e].append(f)
-            parse_file(f)
+            parse_file(f, e)
             return
     print "unknown extension: " + f
 
@@ -255,6 +288,8 @@ def usage():
 # empty dict
 for e in extensions:
     files[e] = []
+
+
 
 
 if len(sys.argv) > 1:
