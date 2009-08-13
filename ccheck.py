@@ -11,13 +11,18 @@
 
 import sys, os, re
 import fileinput
+from subprocess import *
 
 # config
 version = '0.1.0'
+extensions = ['c', 'h']
 
 # global variables
+files = {}
 errors = 0
 empty_lines_count = 0
+cur_filename = ''
+cur_lineno = 0
 
 
 #
@@ -29,7 +34,7 @@ empty_lines_count = 0
 #
 def error(msg):
     global errors
-    print "%s:%d: %s" % (fileinput.filename(), fileinput.filelineno(), msg)
+    print "%s:%d: %s" % (cur_filename, cur_lineno, msg)
     errors += 1
 
 
@@ -39,10 +44,9 @@ def error(msg):
 def print_stats():
     print "Statistics:"
     print "~~~~~~~~~~~"
-    print "Number of files processed:    "
-#    foreach (@extension) {
-#      print " $_: $stats{$_} "
-#    }
+    print "Number of files processed:   ",
+    for e in extensions:
+        print " .%s: %d" % (e, len(files[e])),
     print ""
     print "Number of lines with errors:   %d" % errors
     print ""
@@ -56,44 +60,35 @@ def print_stats():
 #
 # check for strange white space
 #
-def check_whitespace(line):
+def check_whitespace(line, len):
 
-    # chomp
-    line = line.rstrip('\n')
-    line_len = len(line)
-
-#    print "scanning line {%d} [%s]" % (line_len, line)
+    if len == 0:
+        return
 
     # general trailing whitespace check
-    if re.search(' $', line):
+    if line[-1] == ' ':
         error("has trailing space(s)")
-    if re.search('\t$', line):
+
+    if line[-1] == '\t':
         error("has trailing tab(s)")
 
     # make sure TAB is used for indentation
-    for n in range(4, 17, 4):
-        if re.match('^ {%d}\S+' % n, line):
+    for n in range(4, 9, 4):
+        if line[0:n] == ' '*n and line[n] != ' ':
             error("starts with %d spaces, use tab instead" % n)
 
+
+def check_whitespace2(line, len):
+    
     # check for empty lines count
     global empty_lines_count
-    if 1 == fileinput.lineno():
-        empty_lines_count = 0
-    if line_len == 0:
+    if len == 0:
         empty_lines_count += 1
     else:
         empty_lines_count = 0
     if empty_lines_count > 2:
         error("should have maximum two empty lines (%d)" % empty_lines_count)
         empty_lines_count = 0
-
-    return
-
-
-#
-# main program
-#
-
 
 #
 # map of extensions, and which checks to perform
@@ -104,16 +99,61 @@ def check_whitespace(line):
 # scan all files of extensions .xyz
 # parse all files
 #
-  
+def build_file_list():
+    for e in extensions:
+        cmd = "find . -name \"*." + e + "\""
+        out = Popen(cmd, stdout=PIPE, shell=True).communicate()[0]
+        files[e] = out.split()
 
-# check program arguments
-if len(sys.argv) > 0:
+
+def process(line):
+    # chomp
+    line = line.rstrip('\n')
+    line_len = len(line)
+
+    check_whitespace(line, line_len)
+    check_whitespace2(line, line_len)
+
+
+def parse_file(filename):
+    #print "parsing " + filename
+    file = open(filename)
+
+    global cur_filename, cur_lineno
+    cur_filename = filename
+    
+    while 1:
+        lines = file.readlines(100000)
+        if not lines:
+            break
+        cur_lineno = 0
+        for line in lines:
+            cur_lineno += 1
+            process(line)
+
+
+#
+# main program
+#
+
+
+if len(sys.argv) > 1:
     for line in fileinput.input():
-        check_whitespace(line)
+        if fileinput.isfirstline():
+            print "scanning " + fileinput.filename()
+        process(line)
 else:
     # scan recurs
-    pass
+    print "building file list.."
+    build_file_list()    
 
+    print "scanning .."
+    for e in extensions:
+        for f in files[e]:
+            pass
+            parse_file(f)
+
+    
 
 #
 # done - print stats
