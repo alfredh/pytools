@@ -90,6 +90,38 @@ def check_whitespace2(line, len):
         error("should have maximum two empty lines (%d)" % empty_lines_count)
         empty_lines_count = 0
 
+
+#
+# check for end of line termination issues
+#
+def check_termination(line, len):
+
+    if len < 2:
+        return
+
+#    print "scanning len=%d line=%s" % (len, line)
+
+    if line[-1] == ';':
+        if line[-2] == ' ':
+            error("has spaces before terminator")
+
+    if line[-2:] == ';;':
+        error("has double semicolon")
+
+
+#
+# check for C++ comments
+#
+def check_c_preprocessor(line, len):
+
+    index = line.find('//')
+    if index != -1:
+        if line[index-1] != ':':
+            error("C++ comment, use C comments /* ... */ instead")
+
+
+
+
 #
 # map of extensions, and which checks to perform
 #
@@ -113,10 +145,12 @@ def process(line):
 
     check_whitespace(line, line_len)
     check_whitespace2(line, line_len)
-
+    check_termination(line, line_len)
+    check_c_preprocessor(line, line_len)
+    
 
 def parse_file(filename):
-    print "parsing " + filename
+    #print "parsing " + filename
     file = open(filename)
 
     global cur_filename, cur_lineno
