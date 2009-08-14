@@ -34,8 +34,8 @@ class ccheck:
         self.cur_lineno = 0
         self.empty_lines_count = 0
         self.files = {}
-        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4']
-        
+        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py']
+
         # empty dict
         for e in self.extensions:
             self.files[e] = []
@@ -44,11 +44,14 @@ class ccheck:
                               self.check_hex_lowercase, self.check_pre_incr,
                               self.check_file_unix]
         self.funcmap = {
-            'c':    [self.check_brackets, self.check_c_preprocessor],
-            'h':    [self.check_brackets],
-            'cpp':  [self.check_brackets],
-            'mk':   [],
-            'm4':   [self.check_brackets, self.check_c_comments],
+            'c':    [self.check_brackets, self.check_c_preprocessor,
+                     self.check_indent_tab],
+            'h':    [self.check_brackets, self.check_indent_tab],
+            'cpp':  [self.check_brackets, self.check_indent_tab],
+            'mk':   [self.check_indent_tab],
+            'm4':   [self.check_brackets, self.check_c_comments,
+                     self.check_indent_tab],
+            'py':   [self.check_brackets],
             }
         self.extmap = {
             'c':    ['*.c'],
@@ -56,18 +59,20 @@ class ccheck:
             'cpp':  ['*.cpp', '*.cc'],
             'mk':   ['*Makefile', '*.mk'],
             'm4':   ['*.m4'],
+            'py':   ['*.py'],
             }
         self.maxsize = {
             'c':  (79, 3000),
             'h':  (79, 1000),
             'mk': (79, 1000),
             'm4': (79, 3000),
+            'py': (79, 3000),
             }
 
 
     def __del__(self):
         pass
-    
+
 
     #
     # print an error message and increase error count
@@ -107,11 +112,6 @@ class ccheck:
         if line[-1] == '\t':
             self.error("has trailing tab(s)")
 
-        # make sure TAB is used for indentation
-        for n in range(4, 17, 4):
-            if len > n and line[0:n] == ' '*n and line[n] != ' ':
-                self.error("starts with %d spaces, use tab instead" % n)
-
         # check for empty lines count
         if len == 0:
             self.empty_lines_count += 1
@@ -121,6 +121,18 @@ class ccheck:
             error("should have maximum two empty lines (%d)" % \
                   self.empty_lines_count)
             self.empty_lines_count = 0
+
+
+    #
+    # check for strange white space
+    #
+    def check_indent_tab(self, line, len):
+
+        # make sure TAB is used for indentation
+        for n in range(4, 17, 4):
+            if len > n and line[0:n] == ' '*n and line[n] != ' ':
+                self.error("starts with %d spaces, use tab instead" % n)
+
 
 
     #
@@ -166,9 +178,10 @@ class ccheck:
 
         # expand TAB to 8 spaces
         l = len(line.expandtabs())
-    
+
         if l > max_x:
-            self.error("line is too wide (" + str(l) + " - max " + str(max_x) + ")");
+            self.error("line is too wide (" + str(l) + " - max " \
+                       + str(max_x) + ")");
 
         #    TODO:
         #    if ($line > $max_y) {
@@ -185,7 +198,7 @@ class ccheck:
             a = m.group(1)
             if re.search('[A-F]+', a):
                 self.error("0x%s should be lowercase" % a)
-        
+
 
     #
     # check for correct brackets usage in C/C++
@@ -202,7 +215,8 @@ class ccheck:
 
             if keyword.strip() in operators:
                 if not re.search('[ ]{1}', keyword):
-                    self.error("no single space after operator '%s()'" % keyword)
+                    self.error("no single space after operator '%s()'" \
+                               % keyword)
 
         # check that else statements do not have preceeding
         # end-bracket on the same line
@@ -255,11 +269,11 @@ class ccheck:
     def parse_file(self, filename, ext):
 
         funcs = self.funcmap[ext]
-    
+
         file = open(filename)
 
         self.cur_filename = filename
-    
+
         while 1:
             lines = file.readlines(100000)
             if not lines:
@@ -321,7 +335,7 @@ def usage():
 
 def main():
     cc = ccheck()
-    
+
     if len(sys.argv) > 1:
         if sys.argv[1] == '--help':
             usage()
@@ -337,7 +351,7 @@ def main():
                 print "unknown file type: " + f
     else:
         # scan all files recursively
-        cc.build_file_list('.')    
+        cc.build_file_list('.')
 
     # done - print stats
     cc.print_stats()
