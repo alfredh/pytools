@@ -14,13 +14,10 @@
 #
 #
 # TODO:
-# - benchmark against ccheck.pl
-# - add mapping for file ext to types of test
 # - object oriented: make a class ccheck
 #
 
-import sys, os, re
-import os, fnmatch
+import sys, os, re, fnmatch
 
 # config
 version = '0.1.0'
@@ -34,6 +31,14 @@ cur_filename = ''
 cur_lineno = 0
 
 
+#
+# extension mapping:
+#
+#   C-files:        .c
+#   Header files:   .h  .hh
+#   C++ files:      .cpp .cc
+#   Makefiles:      Makefile, mk, mak
+#
 extmap = {
     'c':    ['*.c'],
     'h':    ['*.h'],
@@ -51,10 +56,6 @@ maxsize = {
     'm4': (79, 3000),
     }
 
-
-#
-# helper functions
-#
 
 #
 # print an error message and increase error count
@@ -126,8 +127,6 @@ def check_termination(line, len):
     if len < 2:
         return
 
-#    print "scanning len=%d line=%s" % (len, line)
-
     if line[-1] == ';':
         if line[-2] == ' ':
             error("has spaces before terminator")
@@ -197,13 +196,9 @@ def check_brackets(line, len):
 
     operators = ["do", "if", "for", "while", "switch"]
 
-#    return if (m/^\#if/); # skip macros
-
     m = re.search('\W*(\w+\W*)\(', line)
     if m:
         keyword = m.group(1)
-
-#      return if ($keyword =~ m/\(/)
 
         if keyword.strip() in operators:
             if not re.search('[ ]{1}', keyword):
@@ -232,19 +227,13 @@ def check_file_unix(line, len):
 #
 def check_pre_incr(line, len):
 
-    #TODO: remove 'hatt'
-    m = re.search('(^\s+\w+[+-]{2};)', line)
+    m = re.search('(\s+\w+[+-]{2};)', line)
     if m:
         op = m.group(1)
         if op.find('++') != -1:
             error("Use pre-increment: %s" % op);
         else:
             error("Use pre-decrement: %s" % op);
-
-
-#
-# map of extensions, and which checks to perform
-#
 
 
 """
@@ -270,14 +259,10 @@ def build_file_list(top):
         rec_quasiglob(top, em)
 
 
-# mapping:
 #
-#   C-files:        .c
-#   Header files:   .h  .hh
-#   C++ files:      .cpp .cc
-#   Makefiles:      Makefile, mk, mak
+# map of extensions, and which checks to perform
 #
-#
+
 
 common_checks = [check_whitespace, check_whitespace2,
                  check_termination, check_hex_lowercase,
@@ -292,12 +277,8 @@ mapping = {
     }
 
 
-#for k, v in mapping.iteritems():
-#    print "mapping of *." + k + ":",  v
-
-
 def process_line(line, funcs, ext):
-    # chomp
+
     line = line.rstrip('\n')
     line_len = len(line)
 
@@ -357,8 +338,6 @@ def usage():
     print "options:"
     print ""
     print "  --help     Display help"
-    print "  --verbose  Verbose output"
-    print "  --quiet    Only print warnings"
     print "  --exclude  Exclude pattern(s)"
 
 
@@ -372,28 +351,29 @@ for e in extensions:
     files[e] = []
 
 
-if len(sys.argv) > 1:
-    if sys.argv[1] == '--help':
-        usage()
-        exit(2)
+def main():
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--help':
+            usage()
+            exit(2)
 
-    for f in sys.argv[1:]:
-        print "checking: " + f
-        if os.path.isdir(f):
-            build_file_list(f)
-        elif os.path.isfile(f):
-            parse_any_file(f)
-        else:
-            print "unknown file type: " + f
-else:
-    # scan all files recursively
-    build_file_list('.')    
+            for f in sys.argv[1:]:
+                print "checking: " + f
+                if os.path.isdir(f):
+                    build_file_list(f)
+                elif os.path.isfile(f):
+                    parse_any_file(f)
+                else:
+                    print "unknown file type: " + f
+    else:
+        # scan all files recursively
+        build_file_list('.')    
+
+    # done - print stats
+    print_stats()
+
+    exit(errors != 0)
 
 
-#
-# done - print stats
-#
-print_stats()
-
-
-exit(errors != 0)
+if __name__ == "__main__":
+    main()
