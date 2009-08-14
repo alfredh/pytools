@@ -204,6 +204,21 @@ def check_brackets(line, len):
 
 
 #
+# check for post-increment/decrement
+#
+def check_pre_incr(line, len):
+
+    #TODO: remove 'hatt'
+    m = re.search('(^\s+\w+[+-]{2};)', line)
+    if m:
+        op = m.group(1)
+        if op.find('++') != -1:
+            error("Use pre-increment: %s" % op);
+        else:
+            error("Use pre-decrement: %s" % op);
+
+
+#
 # map of extensions, and which checks to perform
 #
 
@@ -240,7 +255,8 @@ def build_file_list(top):
 #
 
 common_checks = [check_whitespace, check_whitespace2,
-                 check_termination, check_hex_lowercase]
+                 check_termination, check_hex_lowercase,
+                 check_pre_incr]
 
 mapping = {
     'c':    [check_brackets, check_c_preprocessor],
