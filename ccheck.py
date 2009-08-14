@@ -204,6 +204,18 @@ def check_brackets(line, len):
 
 
 #
+# check that file is in Unix format
+#
+def check_file_unix(line, len):
+
+    if len < 1:
+        return
+
+    if line[-1] == '\r':
+        error("not in Unix format");
+
+
+#
 # check for post-increment/decrement
 #
 def check_pre_incr(line, len):
@@ -256,7 +268,7 @@ def build_file_list(top):
 
 common_checks = [check_whitespace, check_whitespace2,
                  check_termination, check_hex_lowercase,
-                 check_pre_incr]
+                 check_pre_incr, check_file_unix]
 
 mapping = {
     'c':    [check_brackets, check_c_preprocessor],
