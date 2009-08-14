@@ -34,6 +34,15 @@ cur_filename = ''
 cur_lineno = 0
 
 
+extmap = {
+    'c':    ['*.c'],
+    'h':    ['*.h'],
+    'cpp':  ['*.cpp', '*.cc'],
+    'mk':   ['*Makefile', '*.mk'],
+    'm4':   ['*.m4'],
+    }
+
+
 # Maximum size of files: X * Y
 maxsize = {
     'c':  (79, 3000),
@@ -257,7 +266,8 @@ def rec_quasiglob(top, patterns):
 #
 def build_file_list(top):
     for e in extensions:
-        rec_quasiglob(top, ['*.' + e])
+        em = extmap[e]
+        rec_quasiglob(top, em)
 
 
 # mapping:
@@ -278,7 +288,7 @@ mapping = {
     'cpp':  [check_brackets],
     'h':    [check_brackets],
     'mk':   [],
-    'm4':   [check_c_comments],
+    'm4':   [check_brackets, check_c_comments],
     }
 
 
@@ -325,10 +335,12 @@ def parse_file(filename, ext):
 def parse_any_file(f):
 #    print "parse_any_file: " + f
     for e in extensions:
-        if fnmatch.fnmatch(f, '*.' + e):
-            files[e].append(f)
-            parse_file(f, e)
-            return
+        em = extmap[e]
+        for m in em:
+            if fnmatch.fnmatch(f, m):
+                files[e].append(f)
+                parse_file(f, e)
+                return
     print "unknown extension: " + f
 
 
