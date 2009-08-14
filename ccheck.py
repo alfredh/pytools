@@ -11,6 +11,7 @@
 # Contributors:
 #
 #    Haavard Wik Thorkildssen <havard.thorkildssen@telio.ch>
+#    Mal Minhas <mal@malm.co.uk>
 #
 #
 # TODO:
@@ -35,6 +36,12 @@ class ccheck:
         self.empty_lines_count = 0
         self.files = {}
         self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py']
+
+        self.operators = ["do", "if", "for", "while", "switch"]
+        self.re_tab  = re.compile('(\w+\W*)\(')
+        self.re_else = re.compile('\s*\}\s*else')
+        self.re_inc  = re.compile('(^\s+\w+[+-]{2};)')
+        self.re_hex  = re.compile('0x([0-9A-Fa-f]+)')
 
         # empty dict
         for e in self.extensions:
@@ -193,7 +200,7 @@ class ccheck:
     #
     def check_hex_lowercase(self, line, len):
 
-        m = re.search('0x([0-9A-Fa-f]+)', line)
+        m = self.re_hex.search(line)
         if m:
             a = m.group(1)
             if re.search('[A-F]+', a):
@@ -207,20 +214,18 @@ class ccheck:
     #
     def check_brackets(self, line, len):
 
-        operators = ["do", "if", "for", "while", "switch"]
-
-        m = re.search('\W*(\w+\W*)\(', line)
+        m = self.re_tab.search(line)
         if m:
             keyword = m.group(1)
 
-            if keyword.strip() in operators:
+            if keyword.strip() in self.operators:
                 if not re.search('[ ]{1}', keyword):
                     self.error("no single space after operator '%s()'" \
                                % keyword)
 
         # check that else statements do not have preceeding
         # end-bracket on the same line
-        if re.search('\s*\}\s*else', line):
+        if self.re_else.search(line):
             self.error("else: ending if bracket should be on previous line")
 
 
@@ -241,7 +246,7 @@ class ccheck:
     #
     def check_pre_incr(self, line, len):
 
-        m = re.search('(^\s+\w+[+-]{2};)', line)
+        m = self.re_inc.search(line)
         if m:
             op = m.group(1)
             if op.find('++') != -1:
