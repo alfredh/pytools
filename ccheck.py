@@ -18,9 +18,11 @@
 # - optimize regex functions
 #
 
-import sys, os, re, fnmatch
+import sys, os, re, fnmatch, getopt
 
+PROGRAM = 'ccheck'
 VERSION = '0.1.0'
+AUTHOR  = 'Alfred E. Heggestad'
 
 
 ###
@@ -321,16 +323,16 @@ class ccheck:
 
 
 def usage():
-    print "ccheck version " + VERSION
+    print "%s version %s" % (PROGRAM, VERSION)
     print ""
     print "Usage:"
     print ""
-    print "  ccheck [options]"
+    print "  %s [options] [file]... [dir]..." % PROGRAM
     print ""
     print "options:"
     print ""
-    print "  --help     Display help"
-    print "  --exclude  Exclude pattern(s)"
+    print "  -h --help     Display help"
+    print "  -V --version  Show version info"
 
 
 #
@@ -339,13 +341,25 @@ def usage():
 
 
 def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hV', ['help', 'version'])
+    except getopt.GetoptError, err:
+        print str(err)
+        usage()
+        sys.exit(2)
+    for o, a in opts:
+        if o in ('-h', '--help'):
+            usage()
+            sys.exit()
+        elif o in ('-V', '--version'):
+            print "%s version %s, written by %s" % (PROGRAM, VERSION, AUTHOR)
+            sys.exit()
+        else:
+            assert False, "unhandled option"
+
     cc = ccheck()
 
     if len(sys.argv) > 1:
-        if sys.argv[1] == '--help':
-            usage()
-            exit(2)
-
         for f in sys.argv[1:]:
             print "checking: " + f
             if os.path.isdir(f):
