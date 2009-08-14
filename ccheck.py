@@ -24,7 +24,7 @@ import os, fnmatch
 
 # config
 version = '0.1.0'
-extensions = ['c', 'h', 'mk', 'cpp', 'm4']
+extensions = ['c', 'cpp', 'h', 'mk', 'm4']
 
 # global variables
 files = {}
@@ -64,7 +64,7 @@ def print_stats():
     print "~~~~~~~~~~~"
     print "Number of files processed:   ",
     for e in extensions:
-        print " .%s: %d" % (e, len(files[e])),
+        print " %s: %d" % (e, len(files[e])),
     print ""
     print "Number of lines with errors:   %d" % errors
     print ""
@@ -91,7 +91,7 @@ def check_whitespace(line, len):
         error("has trailing tab(s)")
 
     # make sure TAB is used for indentation
-    for n in range(4, 9, 4):
+    for n in range(4, 17, 4):
         if len > n and line[0:n] == ' '*n and line[n] != ' ':
             error("starts with %d spaces, use tab instead" % n)
 
