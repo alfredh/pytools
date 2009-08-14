@@ -52,7 +52,7 @@ maxsize = {
 #
 def error(msg):
     global errors
-    print "%s:%d: %s" % (cur_filename, cur_lineno, msg)
+    print >> sys.stderr, "%s:%d: %s" % (cur_filename, cur_lineno, msg)
     errors += 1
 
 
@@ -154,10 +154,13 @@ def check_c_comments(line, len):
 # param 2 - Maximum lines per file
 # param 3 - Filename
 #
-def check_xy_max(line, len, max_x):
+def check_xy_max(line, line_len, max_x):
 
-    if len > max_x:
-	error("line is too wide (" + str(len) + " - max " + str(max_x) + ")");
+    # expand TAB to 8 spaces
+    l = len(line.expandtabs())
+    
+    if l > max_x:
+	error("line is too wide (" + str(l) + " - max " + str(max_x) + ")");
 
 #    TODO:
 #    if ($line > $max_y) {
@@ -357,12 +360,11 @@ for e in extensions:
     files[e] = []
 
 
-
-
 if len(sys.argv) > 1:
     if sys.argv[1] == '--help':
         usage()
         exit(2)
+
     for f in sys.argv[1:]:
         print "checking: " + f
         if os.path.isdir(f):
@@ -373,9 +375,7 @@ if len(sys.argv) > 1:
             print "unknown file type: " + f
 else:
     # scan all files recursively
-    print "building file list.."
     build_file_list('.')    
-
 
 
 #
