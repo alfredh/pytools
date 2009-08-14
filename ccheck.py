@@ -227,7 +227,7 @@ def check_file_unix(line, len):
 #
 def check_pre_incr(line, len):
 
-    m = re.search('(\s+\w+[+-]{2};)', line)
+    m = re.search('(^\s+\w+[+-]{2};)', line)
     if m:
         op = m.group(1)
         if op.find('++') != -1:
