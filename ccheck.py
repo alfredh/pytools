@@ -24,7 +24,7 @@ import os, fnmatch
 
 # config
 version = '0.1.0'
-extensions = ['c', 'h', 'mk', 'cpp']
+extensions = ['c', 'h', 'mk', 'cpp', 'm4']
 
 # global variables
 files = {}
@@ -32,6 +32,15 @@ errors = 0
 empty_lines_count = 0
 cur_filename = ''
 cur_lineno = 0
+
+
+# Maximum size of files: X * Y
+maxsize = {
+    'c':  (79, 3000),
+    'h':  (79, 1000),
+    'mk': (79, 1000),
+    'm4': (79, 3000),
+    }
 
 
 #
@@ -130,6 +139,32 @@ def check_c_preprocessor(line, len):
 
 
 #
+# check that C comments are not used
+#
+def check_c_comments(line, len):
+
+    if line.find('/*') != -1 or line.find('*/') != -1:
+        error("C comment, use Perl-style comments # ... instead");
+
+
+#
+# check max line length and number of lines
+#
+# param 1 - Maximum chars per line
+# param 2 - Maximum lines per file
+# param 3 - Filename
+#
+def check_xy_max(line, len, max_x):
+
+    if len > max_x:
+	error("line is too wide (" + str(len) + " - max " + str(max_x) + ")");
+
+#    TODO:
+#    if ($line > $max_y) {
+#      error("is too big ($lines lines - max $max_y)\n");
+
+
+#
 # check that hexadecimal numbers are lowercase
 #
 def check_hex_lowercase(line, len):
@@ -212,14 +247,15 @@ mapping = {
     'cpp':  [check_brackets],
     'h':    [check_brackets],
     'mk':   [],
+    'm4':   [check_c_comments],
     }
 
 
-for k, v in mapping.iteritems():
-    print "mapping of *." + k + ":",  v
+#for k, v in mapping.iteritems():
+#    print "mapping of *." + k + ":",  v
 
 
-def process(line, funcs):
+def process_line(line, funcs, ext):
     # chomp
     line = line.rstrip('\n')
     line_len = len(line)
@@ -229,13 +265,16 @@ def process(line, funcs):
 
     for func in funcs:
         func(line, line_len)
-    
+
+    if ext in maxsize:
+        (x, y) = maxsize[ext];
+        check_xy_max(line, line_len, x)
     
 
 def parse_file(filename, ext):
-    #print "parsing " + filename
+#    print "parsing: %s (ext=%s)" % (filename, ext)
 
-    funcs = mapping[e]
+    funcs = mapping[ext]
     
     file = open(filename)
 
@@ -249,7 +288,7 @@ def parse_file(filename, ext):
         cur_lineno = 0
         for line in lines:
             cur_lineno += 1
-            process(line, funcs)
+            process_line(line, funcs, ext)
 
 
 def parse_any_file(f):
@@ -299,7 +338,6 @@ if len(sys.argv) > 1:
     for f in sys.argv[1:]:
         print "checking: " + f
         if os.path.isdir(f):
-            print "is a dir: + " + f
             build_file_list(f)
         elif os.path.isfile(f):
             parse_any_file(f)
