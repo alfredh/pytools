@@ -127,8 +127,8 @@ class ccheck:
         else:
             self.empty_lines_count = 0
         if self.empty_lines_count > 2:
-            error("should have maximum two empty lines (%d)" % \
-                  self.empty_lines_count)
+            self.error("should have maximum two empty lines (%d)" % \
+                       self.empty_lines_count)
             self.empty_lines_count = 0
 
 
@@ -194,7 +194,7 @@ class ccheck:
 
         #    TODO:
         #    if ($line > $max_y) {
-        #      error("is too big ($lines lines - max $max_y)\n");
+        #      self.error("is too big ($lines lines - max $max_y)\n");
 
 
     #
@@ -277,12 +277,12 @@ class ccheck:
 
         funcs = self.funcmap[ext]
 
-        file = open(filename)
+        f = open(filename)
 
         self.cur_filename = filename
 
         while 1:
-            lines = file.readlines(100000)
+            lines = f.readlines(100000)
             if not lines:
                 break
             self.cur_lineno = 0
@@ -304,10 +304,10 @@ class ccheck:
 
     def rec_quasiglob(self, top, patterns):
         for root, dirs, files in os.walk(top, topdown=False):
-            for file in files:
+            for f in files:
                 for pattern in patterns:
-                    if fnmatch.fnmatch(file, pattern):
-                        path = os.path.join(root, file)
+                    if fnmatch.fnmatch(f, pattern):
+                        path = os.path.join(root, f)
                         self.parse_any_file(path)
 
 
