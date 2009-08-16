@@ -16,6 +16,7 @@
 #
 # TODO:
 # - optimize regex functions
+# - count max y lines
 #
 
 import sys, os, re, fnmatch, getopt
@@ -49,6 +50,7 @@ class ccheck:
         for e in self.extensions:
             self.files[e] = []
 
+        # todo: global config
         self.common_checks = [self.check_whitespace, self.check_termination,
                               self.check_hex_lowercase, self.check_pre_incr,
                               self.check_file_unix]
@@ -152,9 +154,8 @@ class ccheck:
         if len < 2:
             return
 
-        if line[-1] == ';':
-            if line[-2] == ' ':
-                self.error("has spaces before terminator")
+        if line[-2:] == ' ;':
+            self.error("has spaces before terminator")
 
         if line[-2:] == ';;':
             self.error("has double semicolon")
