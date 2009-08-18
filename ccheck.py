@@ -62,7 +62,7 @@ class ccheck:
             'mk':   [self.check_indent_tab],
             'm4':   [self.check_brackets, self.check_c_comments,
                      self.check_indent_tab],
-            'py':   [self.check_brackets],
+            'py':   [self.check_brackets, self.check_indent_space],
             }
         self.extmap = {
             'c':    ['*.c'],
@@ -144,6 +144,11 @@ class ccheck:
             if len > n and line[0:n] == ' '*n and line[n] != ' ':
                 self.error("starts with %d spaces, use tab instead" % n)
 
+
+    def check_indent_space(self, line, len):
+
+        if len > 1 and line[0] == '\t':
+            self.error("starts with TAB, use 4 spaces instead")
 
 
     #
