@@ -113,15 +113,13 @@ class ccheck:
     #
     def check_whitespace(self, line, len):
 
-        if len == 0:
-            return
+        if len > 0:
+            # general trailing whitespace check
+            if line[-1] == ' ':
+                self.error("has trailing space(s)")
 
-        # general trailing whitespace check
-        if line[-1] == ' ':
-            self.error("has trailing space(s)")
-
-        if line[-1] == '\t':
-            self.error("has trailing tab(s)")
+            if line[-1] == '\t':
+                self.error("has trailing tab(s)")
 
         # check for empty lines count
         if len == 0:
