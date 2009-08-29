@@ -38,7 +38,7 @@ class ccheck:
         self.cur_lineno = 0
         self.empty_lines_count = 0
         self.files = {}
-        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py']
+        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py', 'm']
 
         self.operators = ["do", "if", "for", "while", "switch"]
         self.re_tab  = re.compile('(\w+\W*)\(')
@@ -63,6 +63,7 @@ class ccheck:
             'm4':   [self.check_brackets, self.check_c_comments,
                      self.check_indent_tab],
             'py':   [self.check_brackets, self.check_indent_space],
+            'm':    [self.check_brackets, self.check_c_preprocessor],
             }
         self.extmap = {
             'c':    ['*.c'],
@@ -71,6 +72,7 @@ class ccheck:
             'mk':   ['*Makefile', '*.mk'],
             'm4':   ['*.m4'],
             'py':   ['*.py'],
+            'm':    ['*.m'],
             }
         self.maxsize = {
             'c':  (79, 3000),
@@ -157,11 +159,11 @@ class ccheck:
         if len < 2:
             return
 
-        if line[-2:] == ' ;':
-            self.error("has spaces before terminator")
-
         if line[-2:] == ';;':
             self.error("has double semicolon")
+
+        if line[-2:] == ' ;' and re.search('[\S]+[ \t]+;$', line):
+            self.error("has spaces before terminator")
 
 
     #
@@ -365,7 +367,6 @@ def main():
 
     if len(sys.argv) > 1:
         for f in sys.argv[1:]:
-            print "checking: " + f
             if os.path.isdir(f):
                 cc.build_file_list(f)
             elif os.path.isfile(f):
