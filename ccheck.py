@@ -172,8 +172,8 @@ class ccheck:
     def check_c_preprocessor(self, line, len):
 
         index = line.find('//')
-        if index != -1:
-            if line[index-1] != ':':
+        if index != -1 and line[index-1] != ':':
+            if not re.search('["]+.*//.*["]+', line):
                 self.error("C++ comment, use C comments /* ... */ instead")
 
 
