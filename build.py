@@ -121,13 +121,24 @@ class Build:
                          shell=True).communicate()
 
 
+    def run_splint(self, module, branch):
+        print "running splint [%s, %s]..." % (module, branch)
+
+        dir = os.path.join(self.svn_dir, branch, module)
+        lf = self.logfile('splint', module, branch)
+
+        self.run_op(dir, 'make splint', lf)
+
+        subprocess.Popen('cat ' + lf, shell=True).communicate()
+
+
     def run_tests(self, svn_base, mods):
         for mod in mods:
             for b in mods[mod]:
                 if self.do_svn: self.svn_update(svn_base, mod, b)
                 if self.do_ccheck: self.run_ccheck(mod, b)
+                if self.do_splint: self.run_splint(mod, b)
             #run_doxygen $module, $module_hash{$module}->[$i] if $do_doxygen;
-            #run_splint $module, $module_hash{$module}->[$i] if $do_splint;
         for mod in mods:
             for b in mods[mod]:
                 if self.do_build: self.build_binaries(mod, b)
