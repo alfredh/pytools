@@ -339,6 +339,7 @@ def usage():
     print ""
     print "  -h --help     Display help"
     print "  -V --version  Show version info"
+    print "  -q --quiet    Print warnings only"
 
 
 #
@@ -347,8 +348,10 @@ def usage():
 
 
 def main():
+    quiet = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hV', ['help', 'version'])
+        opts, args = getopt.getopt(sys.argv[1:], \
+                                   'hVq', ['help', 'version', 'quiet'])
     except getopt.GetoptError, err:
         print str(err)
         usage()
@@ -360,13 +363,15 @@ def main():
         elif o in ('-V', '--version'):
             print "%s version %s, written by %s" % (PROGRAM, VERSION, AUTHOR)
             sys.exit()
+        elif o in ('-q', '--quiet'):
+            quiet = True
         else:
             assert False, "unhandled option"
 
     cc = ccheck()
 
-    if len(sys.argv) > 1:
-        for f in sys.argv[1:]:
+    if len(args) > 1:
+        for f in args[1:]:
             if os.path.isdir(f):
                 cc.build_file_list(f)
             elif os.path.isfile(f):
@@ -378,7 +383,8 @@ def main():
         cc.build_file_list('.')
 
     # done - print stats
-    cc.print_stats()
+    if not quiet:
+        cc.print_stats()
 
     exit(cc.errors != 0)
 
