@@ -92,6 +92,35 @@ class Build:
         subprocess.Popen('cat ' + lf, shell=True).communicate()
 
 
+    def run_op(self, dir, op, lf):
+        cmd = 'cd ' + dir + ' && ' + op + ' >> ' + lf + ' 2>&1'
+        p = subprocess.Popen(cmd, shell=True)
+        p.communicate()
+        ret = p.returncode
+        if ret != 0:
+            cmd = 'echo \"Error: ' + dir + op + ' failed (' + ret + ')\" '\
+                  '>> ' + lf + ' 2>&1'
+            subprocess.Popen(cmd, shell=True).communicate()
+
+
+    def build_binaries(self, module, branch):
+        print "building binaries [%s, %s]..." % (module, branch)
+
+        dir = os.path.join(self.svn_dir, branch, module)
+        lf = self.logfile('binaries', module, branch)
+
+        self.run_op(dir, 'make CC=' + CC, lf)
+
+        if self.do_install:
+            self.run_op(dir, 'make install CC=' + self.cc, lf)
+
+        # print warnings and errors to stdout
+        subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
+                         shell=True).communicate()
+        subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
+                         shell=True).communicate()
+
+
     def run_tests(self, svn_base, mods):
         for mod in mods:
             for b in mods[mod]:
@@ -99,6 +128,11 @@ class Build:
                 if self.do_ccheck: self.run_ccheck(mod, b)
             #run_doxygen $module, $module_hash{$module}->[$i] if $do_doxygen;
             #run_splint $module, $module_hash{$module}->[$i] if $do_splint;
+        for mod in mods:
+            for b in mods[mod]:
+                if self.do_build: self.build_binaries(mod, b)
+                # deb
+                # rpm
 
 
 apps = {}
