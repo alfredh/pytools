@@ -132,13 +132,31 @@ class Build:
         subprocess.Popen('cat ' + lf, shell=True).communicate()
 
 
+    def run_doxygen(self, module, branch):
+
+        dir = os.path.join(self.svn_dir, branch, module)
+        lf = self.logfile('doxygen', module, branch)
+
+        if not os.path.isfile(dir + '/mk/Doxyfile'): return
+
+        print "running doxygen [%s, %s]..." % (module, branch)
+
+        self.run_op(dir, 'make dox', lf)
+
+        # print warnings and errors to stdout
+        subprocess.Popen('grep -i warning ' + lf, \
+                         shell=True).communicate()
+        subprocess.Popen('grep -i error ' + lf, \
+                         shell=True).communicate()
+
+
     def run_tests(self, svn_base, mods):
         for mod in mods:
             for b in mods[mod]:
                 if self.do_svn: self.svn_update(svn_base, mod, b)
                 if self.do_ccheck: self.run_ccheck(mod, b)
                 if self.do_splint: self.run_splint(mod, b)
-            #run_doxygen $module, $module_hash{$module}->[$i] if $do_doxygen;
+                if self.do_doxygen: self.run_doxygen(mod, b)
         for mod in mods:
             for b in mods[mod]:
                 if self.do_build: self.build_binaries(mod, b)
