@@ -98,7 +98,7 @@ class Build:
         p.communicate()
         ret = p.returncode
         if ret != 0:
-            cmd = 'echo \"Error: ' + dir + op + ' failed (' + ret + ')\" '\
+            cmd = 'echo \"Error: ' + dir + op + ' failed ('+str(ret)+')\" '\
                   '>> ' + lf + ' 2>&1'
             subprocess.Popen(cmd, shell=True).communicate()
 
@@ -150,6 +150,46 @@ class Build:
                          shell=True).communicate()
 
 
+    # Make Debian package
+    def make_deb(self, module, branch):
+        print "make deb [%s, %s]..." % (module, branch)
+
+        dir = os.path.join(self.svn_dir, branch, module)
+        lf = self.logfile('makedeb', module, branch)
+
+        if not os.path.exists(dir + '/debian'): return
+
+        print "Found debian directory.."
+
+        self.run_op(dir, 'make deb', lf)
+
+        # print warnings and errors to stdout
+        subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
+                         shell=True).communicate()
+        subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
+                         shell=True).communicate()
+
+
+    # Make RPM package
+    def make_rpm(self, module, branch):
+        print "make rpm [%s, %s]..." % (module, branch)
+
+        dir = os.path.join(self.svn_dir, branch, module)
+        lf = self.logfile('makerpm', module, branch)
+
+        if not os.path.exists(dir + '/rpm'): return
+
+        print "Found rpm directory.."
+
+        self.run_op(dir, 'make rpm', lf)
+
+        # print warnings and errors to stdout
+        subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
+                         shell=True).communicate()
+        subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
+                         shell=True).communicate()
+
+
     def run_tests(self, svn_base, mods):
         for mod in mods:
             for b in mods[mod]:
@@ -160,8 +200,8 @@ class Build:
         for mod in mods:
             for b in mods[mod]:
                 if self.do_build: self.build_binaries(mod, b)
-                # deb
-                # rpm
+                if self.do_deb:   self.make_deb(mod, b)
+                if self.do_rpm:   self.make_rpm(mod, b)
 
 
 apps = {}
