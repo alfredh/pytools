@@ -182,7 +182,17 @@ class ccheck:
     #
     def check_c_comments(self, line, len):
 
-        if line.find('/*') != -1 or line.find('*/') != -1:
+        cc = False
+
+        if line.find('/*') != -1:
+            if not re.search('[\'"]+.*/\*.*[\'"]+', line):
+                cc = True
+
+        if line.find('*/') != -1:
+            if not re.search('[\'"]+.*\*/.*[\'"]+', line):
+                cc = True
+
+        if cc:
             self.error("C comment, use Perl-style comments # ... instead");
 
 
