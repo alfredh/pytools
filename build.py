@@ -230,7 +230,7 @@ class Build:
 
         f.close()
 
-        return '' + added + 'files, revision ' + rev
+        return '' + str(added) + ' files, revision ' + str(rev)
 
 
     def parse_log(self, logfile):
@@ -252,11 +252,12 @@ class Build:
 
         if err > 0:
             return '<font color=\"#ff6666\">[Failed]</font>' + \
-                   ' with ' + err + 'error(s) and ' + warn + 'warning(s)' + \
+                   ' with ' + str(err) + 'error(s) and ' \
+                   + str(warn) + 'warning(s)' + \
                    '(<a href=\"' + loghtml + '\">logs</a>)'
         elif warn > 0:
             return '<font color=\"#999900\">[Failed]</font>' + \
-                   ' with ' + warn + 'warning(s)' + \
+                   ' with ' + str(warn) + 'warning(s)' + \
                    '(<a href=\"' + loghtml + '\">logs</a>)'
         elif lines == 0:
             return '<font color=\"#990000\">Fatal</font> - '\
@@ -276,7 +277,7 @@ class Build:
 
         if err > 0:
             return '<font color=\"#ff6666\">[Failed]</font>' + \
-                   ' with ' + err + ' error(s) ' + \
+                   ' with ' + str(err) + ' error(s) ' + \
                    '(<a href=\"log/' + logfile + '\">logs</a>)'
         else:
             return '<font color=\"#009900\">[Passed]</font>'
@@ -371,9 +372,16 @@ class Build:
         f.close()
 
 
-apps = {}
-libs = {}
-mods = {}
+def usage():
+  print sys.argv[0] + " version " + VERSION
+  print ""
+  print "Usage:"
+  print ""
+  print "  " + sys.argv[0] + " [options] <config file>"
+  print ""
+  print "options:"
+  print "  --help     Display help"
+
 
 def read_mods(config, section):
     d = {}
@@ -386,27 +394,34 @@ def read_mods(config, section):
     return d
 
 
-config_file = 'build.cfg'
-
-config = ConfigParser.ConfigParser()
-config.read(config_file)
-
-svn_base = config.get('core', 'svn_base')
-apps     = read_mods(config, 'apps')
-libs     = read_mods(config, 'libs')
-
-for a in apps:
-    mods[a] = apps[a]
-for l in libs:
-    mods[l] = libs[l]
-
-#print "apps = %s, libs = %s, mods = %s" % (apps, libs, mods)
-
-
 # ---------------------------------------------------
 
 if __name__ == '__main__':
-    bld = Build('/Users/alfredh/tmp/build', config)
+
+    apps = {}
+    libs = {}
+    mods = {}
+
+    if len (sys.argv) <= 1:
+        usage()
+        exit(2)
+
+    config_file = sys.argv[1]
+
+    config = ConfigParser.ConfigParser()
+    config.read(config_file)
+
+    root_dir = config.get('core', 'root_dir')
+    svn_base = config.get('core', 'svn_base')
+    apps     = read_mods(config, 'apps')
+    libs     = read_mods(config, 'libs')
+
+    for a in apps:
+        mods[a] = apps[a]
+    for l in libs:
+        mods[l] = libs[l]
+
+    bld = Build(root_dir, config)
 
     bld.run_tests(svn_base, libs)
     bld.run_tests(svn_base, apps)
