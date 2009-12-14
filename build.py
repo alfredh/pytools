@@ -9,7 +9,7 @@
 #    published by the Free Software Foundation.
 #
 
-import os, platform, getpass, subprocess, shutil
+import os, sys, platform, getpass, subprocess, shutil, time, re
 import ConfigParser
 
 # constants
@@ -21,7 +21,7 @@ MAKE     = 'make'
 CCHECK   = '/usr/local/bin/ccheck.py'
 HOSTNAME = platform.node()
 USERNAME = getpass.getuser()
-UNAME    = os.uname()
+UNAME    = os.uname()[3]
 CC_VER   = subprocess.Popen([CC, "--version"], stdout=subprocess.PIPE).\
            communicate()[0].split('\n')[0]
 
@@ -213,8 +213,167 @@ class Build:
                 if self.do_rpm:   self.make_rpm(mod, b)
 
 
+    def parse_svn(self, logfile):
+
+        print "parse_svn: logfile=%s" % logfile
+
+        f = open(logfile, 'r')
+
+        added = rev = 0
+        for line in f:
+            m = re.search('Checked out revision ([0-9]+)', line)
+            if m:
+                rev = m.group(1)
+
+            if re.search('^A ', line, re.I):
+                added += 1
+
+        f.close()
+
+        return '' + added + 'files, revision ' + rev
+
+
+    def parse_log(self, logfile):
+
+        f = open(logfile, 'r')
+
+        loghtml = logfile.replace(self.root_dir, '', 1)
+
+        (lines, err, warn) = (0, 0, 0)
+
+        for line in f:
+            lines += 1
+            if re.search('error[ :]', line, re.I):
+                err += 1
+            if re.search('warning[ :]', line, re.I):
+                warn += 1
+
+        f.close()
+
+        if err > 0:
+            return '<font color=\"#ff6666\">[Failed]</font>' + \
+                   ' with ' + err + 'error(s) and ' + warn + 'warning(s)' + \
+                   '(<a href=\"' + loghtml + '\">logs</a>)'
+        elif warn > 0:
+            return '<font color=\"#999900\">[Failed]</font>' + \
+                   ' with ' + warn + 'warning(s)' + \
+                   '(<a href=\"' + loghtml + '\">logs</a>)'
+        elif lines == 0:
+            return '<font color=\"#990000\">Fatal</font> - '\
+                   + loghtml + ' is empty'
+        else:
+            return '<font color=\"#009900\">[Passed]</font>'
+
+
+    def parse_ccheck(self, logfile):
+        f = open(logfile, 'r')
+
+        err = 0
+        for line in f:
+            err += 1
+
+        f.close()
+
+        if err > 0:
+            return '<font color=\"#ff6666\">[Failed]</font>' + \
+                   ' with ' + err + ' error(s) ' + \
+                   '(<a href=\"log/' + logfile + '\">logs</a>)'
+        else:
+            return '<font color=\"#009900\">[Passed]</font>'
+
+
+    def gen_status(self, mods):
+        print "generating status page..."
+
+        htmlfile = os.path.join(self.root_dir, 'index.html')
+        title = "Daily builds"
+
+        f = open(htmlfile, 'w')
+
+        f.write('<html>\n')
+        f.write('<head>\n')
+        f.write('<title>' + title + '</title>\n')
+        f.write('<link rel=\"stylesheet\" type=\"text/css\" '\
+                'media=\"screen\" href=\"/css/std.css\" />\n')
+        f.write('</head>\n')
+
+        f.write('<body>\n')
+
+        for mod in mods:
+            for b in mods[mod]:
+
+                f.write('<b>' + mod + ', branch ' + b + '</b>\n')
+                f.write('<ul>\n')
+
+                if self.do_svn:
+                    lf = self.logfile('svn', mod, b)
+                    f.write('<li>svn: ' \
+                            + self.parse_svn(lf) + ' ' \
+                            + self.parse_log(lf) \
+                            + '</li>\n')
+
+                if self.do_ccheck:
+                    f.write('<li>ccheck: ' + \
+                            self.parse_ccheck(self.logfile('ccheck', mod, b)) \
+                            + '</li>\n')
+
+                if self.do_splint:
+                    f.write('<li>splint: ' + \
+                            self.parse_ccheck(self.logfile('splint', mod, b)) \
+                            + '</li>\n')
+
+                if self.do_build:
+                    f.write('<li>binaries: ' + \
+                            self.parse_log(self.logfile('binaries', mod, b)) \
+                            + '</li>\n')
+
+                if self.do_deb:
+                    lf = self.logfile('makedeb', mod, b)
+                    if os.path.exists(lf):
+                        f.write('<li>Debian: ' + \
+                                self.parse_log(
+                                    self.logfile('makedeb', mod, b)) \
+                                + '</li>\n')
+
+                if self.do_rpm:
+                    lf = self.logfile('makedeb', mod, b)
+                    if os.path.exists(lf):
+                        f.write('<li>RPM: ' \
+                                + self.parse_log(
+                                    self.logfile('makerpm', mod, b)) \
+                                + '</li>\n')
+
+                if self.do_doxygen:
+                    dir = os.path.join(self.svn_dir, b, mod, 'mk/Doxyfile')
+
+                    if os.path.exists(dir):
+                        f.write('<li>doxygen: ' \
+                                + self.parse_log(
+                                    self.logfile('doxygen', mod, b)))
+                        f.write('<a href=\"' + \
+                                'svn/' + b + '/' + mod + \
+                                '-dox/html/index.html\">(html)</a>\n')
+
+                f.write('</li>\n')
+                f.write('</ul>\n')
+
+
+        f.write('<hr>\n')
+        f.write('Info:<br>' + CC_VER + '<br>' + UNAME + '<br>\n')
+
+        f.write('<hr>\n')
+        f.write('<i>Generated ' + time.ctime() + ' by ' \
+                + USERNAME + '@' + HOSTNAME + ' using ' \
+                + sys.argv[0] + ' version ' + VERSION + '</i><br><br>\n')
+
+        f.write('</body></html>\n')
+
+        f.close()
+
+
 apps = {}
 libs = {}
+mods = {}
 
 def read_mods(config, section):
     d = {}
@@ -236,13 +395,22 @@ svn_base = config.get('core', 'svn_base')
 apps     = read_mods(config, 'apps')
 libs     = read_mods(config, 'libs')
 
+for a in apps:
+    mods[a] = apps[a]
+for l in libs:
+    mods[l] = libs[l]
 
-#print "apps = %s, libs = %s" % (apps, libs)
+#print "apps = %s, libs = %s, mods = %s" % (apps, libs, mods)
 
 
 # ---------------------------------------------------
 
-bld = Build('/Users/alfredh/tmp/build', config)
+if __name__ == '__main__':
+    bld = Build('/Users/alfredh/tmp/build', config)
 
-bld.run_tests(svn_base, libs)
-bld.run_tests(svn_base, apps)
+    bld.run_tests(svn_base, libs)
+    bld.run_tests(svn_base, apps)
+
+    bld.gen_status(mods)
+
+    print 'build complete. logs at <http://' + HOSTNAME + '/build/>'
