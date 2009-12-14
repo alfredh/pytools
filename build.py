@@ -27,7 +27,7 @@ CC_VER   = subprocess.Popen([CC, "--version"], stdout=subprocess.PIPE).\
 
 
 class Build:
-    # flags - TODO move to config file
+    # default flags
     do_svn = 1
     do_build = 1
     do_install = 0
@@ -37,8 +37,17 @@ class Build:
     do_doxygen = 1
     do_splint = 1
 
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, config):
         print "Build init: %s" % root_dir
+
+        self.do_svn     = config.getboolean('tests', 'do_svn')
+        self.do_build   = config.getboolean('tests', 'do_build')
+        self.do_install = config.getboolean('tests', 'do_install')
+        self.do_deb     = config.getboolean('tests', 'do_deb')
+        self.do_rpm     = config.getboolean('tests', 'do_rpm')
+        self.do_ccheck  = config.getboolean('tests', 'do_ccheck')
+        self.do_doxygen = config.getboolean('tests', 'do_doxygen')
+        self.do_splint  = config.getboolean('tests', 'do_splint')
 
         self.root_dir = root_dir
         self.log_dir = self.root_dir + '/log'
@@ -233,7 +242,7 @@ libs     = read_mods(config, 'libs')
 
 # ---------------------------------------------------
 
-bld = Build('/Users/alfredh/tmp/build')
+bld = Build('/Users/alfredh/tmp/build', config)
 
 bld.run_tests(svn_base, libs)
 bld.run_tests(svn_base, apps)
