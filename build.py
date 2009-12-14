@@ -208,14 +208,14 @@ class Build:
         for mod in mods:
             for b in mods[mod]:
                 if self.do_svn: self.svn_update(svn_base, mod, b)
-                if self.do_ccheck: self.run_ccheck(mod, b)
-                if self.do_splint: self.run_splint(mod, b)
-                if self.do_doxygen: self.run_doxygen(mod, b)
         for mod in mods:
             for b in mods[mod]:
-                if self.do_build: self.build_binaries(mod, b)
-                if self.do_deb:   self.make_deb(mod, b)
-                if self.do_rpm:   self.make_rpm(mod, b)
+                if self.do_ccheck:  self.run_ccheck(mod, b)
+                if self.do_splint:  self.run_splint(mod, b)
+                if self.do_doxygen: self.run_doxygen(mod, b)
+                if self.do_build:   self.build_binaries(mod, b)
+                if self.do_deb:     self.make_deb(mod, b)
+                if self.do_rpm:     self.make_rpm(mod, b)
 
 
     def parse_svn(self, logfile):
