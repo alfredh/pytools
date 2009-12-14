@@ -8,7 +8,7 @@
 #    published by the Free Software Foundation.
 #
 
-TOOLS	:= ccheck.py
+TOOLS	:= build.py ccheck.py
 DEST	:= /usr/local/bin
 
 default:

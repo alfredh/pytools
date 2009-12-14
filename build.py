@@ -8,6 +8,11 @@
 #    it under the terms of the GNU General Public License version 2 as
 #    published by the Free Software Foundation.
 #
+# TODO:
+#
+#  - collect list of errors, return non-zero if errors
+#  - multiple (cross) compilers
+#
 
 import os, sys, platform, getpass, subprocess, shutil, time, re
 import ConfigParser
@@ -214,9 +219,6 @@ class Build:
 
 
     def parse_svn(self, logfile):
-
-        print "parse_svn: logfile=%s" % logfile
-
         f = open(logfile, 'r')
 
         added = rev = 0
