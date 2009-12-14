@@ -254,12 +254,12 @@ class Build:
 
         if err > 0:
             return '<font color=\"#ff6666\">[Failed]</font>' + \
-                   ' with ' + str(err) + 'error(s) and ' \
-                   + str(warn) + 'warning(s)' + \
+                   ' with ' + str(err) + ' error(s) and ' \
+                   + str(warn) + ' warning(s)' + \
                    '(<a href=\"' + loghtml + '\">logs</a>)'
         elif warn > 0:
             return '<font color=\"#999900\">[Failed]</font>' + \
-                   ' with ' + str(warn) + 'warning(s)' + \
+                   ' with ' + str(warn) + ' warning(s)' + \
                    '(<a href=\"' + loghtml + '\">logs</a>)'
         elif lines == 0:
             return '<font color=\"#990000\">Fatal</font> - '\
