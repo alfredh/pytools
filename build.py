@@ -126,13 +126,13 @@ class Build:
     def build_binaries(self, module, branch):
         print "building binaries [%s, %s]..." % (module, branch)
 
-        dir = os.path.join(self.svn_dir, branch, module)
+        path = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('binaries', module, branch)
 
-        self.run_op(dir, 'make CC=' + CC, lf)
+        self.run_op(path, 'make CC=' + CC, lf)
 
         if self.do_install:
-            self.run_op(dir, 'make install CC=' + self.cc, lf)
+            self.run_op(path, 'make install CC=' + CC, lf)
 
         # print warnings and errors to stdout
         subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
@@ -144,41 +144,40 @@ class Build:
     def run_splint(self, module, branch):
         print "running splint [%s, %s]..." % (module, branch)
 
-        dir = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('splint', module, branch)
 
-        self.run_op(dir, 'make splint', lf)
+        self.run_op(os.path.join(self.svn_dir, branch, module),
+                    'make splint', lf)
 
         subprocess.Popen('cat ' + lf, shell=True).communicate()
 
 
     def run_doxygen(self, module, branch):
 
-        dir = os.path.join(self.svn_dir, branch, module)
+        path = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('doxygen', module, branch)
 
-        if not os.path.isfile(dir + '/mk/Doxyfile'): return
+        if os.path.isfile(path + '/mk/Doxyfile'):
+            print "running doxygen [%s, %s]..." % (module, branch)
 
-        print "running doxygen [%s, %s]..." % (module, branch)
+            self.run_op(path, 'make dox', lf)
 
-        self.run_op(dir, 'make dox', lf)
-
-        # print warnings and errors to stdout
-        subprocess.Popen('grep -i warning ' + lf, \
-                         shell=True).communicate()
-        subprocess.Popen('grep -i error ' + lf, \
-                         shell=True).communicate()
+            # print warnings and errors to stdout
+            subprocess.Popen('grep -i warning ' + lf, \
+                             shell=True).communicate()
+            subprocess.Popen('grep -i error ' + lf, \
+                             shell=True).communicate()
 
 
     # Make Debian package
     def make_deb(self, module, branch):
         print "make deb [%s, %s]..." % (module, branch)
 
-        dir = os.path.join(self.svn_dir, branch, module)
+        path = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('makedeb', module, branch)
 
-        if os.path.exists(dir + '/debian'):
-            self.run_op(dir, 'make deb', lf)
+        if os.path.exists(path + '/debian'):
+            self.run_op(path, 'make deb', lf)
 
             # print warnings and errors to stdout
             subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
@@ -191,11 +190,11 @@ class Build:
     def make_rpm(self, module, branch):
         print "make rpm [%s, %s]..." % (module, branch)
 
-        dir = os.path.join(self.svn_dir, branch, module)
+        path = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('makerpm', module, branch)
 
-        if os.path.exists(dir + '/rpm'):
-            self.run_op(dir, 'make rpm', lf)
+        if os.path.exists(path + '/rpm'):
+            self.run_op(path, 'make rpm', lf)
 
             # print warnings and errors to stdout
             subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
@@ -347,9 +346,8 @@ class Build:
                                 + '</li>\n')
 
                 if self.do_doxygen:
-                    dir = os.path.join(self.svn_dir, b, mod, 'mk/Doxyfile')
-
-                    if os.path.exists(dir):
+                    path = os.path.join(self.svn_dir, b, mod, 'mk/Doxyfile')
+                    if os.path.exists(path):
                         f.write('<li>doxygen: ' \
                                 + self.parse_log(
                                     self.logfile('doxygen', mod, b)))
