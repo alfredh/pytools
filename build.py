@@ -104,7 +104,11 @@ class Build:
         subprocess.Popen(cmd, shell=True).communicate()
 
         # print warnings and errors to stdout
-        subprocess.Popen('cat ' + lf, shell=True).communicate()
+        #subprocess.Popen('cat ' + lf, shell=True).communicate()
+        f = open(lf, 'r')
+        for line in f:
+            sys.stderr.write(line)
+        f.close()
 
 
     def run_op(self, dir, op, lf):
