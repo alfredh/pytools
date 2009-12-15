@@ -109,7 +109,7 @@ class Build:
             f = open(lf, 'r')
             for line in f:
                 sys.stderr.write(line)
-                f.close()
+            f.close()
 
 
     def run_op(self, dir, op, lf):
