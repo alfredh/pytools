@@ -13,6 +13,7 @@
 #  - collect list of errors, return non-zero if errors
 #  - multiple (cross) compilers
 #  - debian build gives some warnings/errors
+#  - html-table output
 #
 
 import os, sys, platform, getpass, subprocess, shutil, time, re
@@ -77,36 +78,11 @@ class Build:
         return os.path.join(self.log_dir, f)
 
 
-    def svn_update(self, svn_base, module, branch):
-        print "subversion update [%s, %s]..." % (module, branch)
-
-        if branch == 'trunk':
-            url = os.path.join(svn_base, module, 'trunk')
-        else:
-            url = os.path.join(svn_base, module, 'branches', branch)
-
-        path = os.path.join(self.svn_dir, branch, module)
-
-        svn = 'svn co ' + url + ' ' + path + '>>' + \
-              self.logfile('svn', module, branch) + ' 2>&1'
-
-        subprocess.Popen(svn, shell=True).communicate()
-
-
-    def run_ccheck(self, module, branch):
-        print "running ccheck [%s, %s]..." % (module, branch)
-
-        mod = os.path.join(self.svn_dir, branch, module)
-        lf = self.logfile('ccheck', module, branch)
-
-        cmd = 'cd ' + mod + '&&' + CCHECK + ' --quiet >>' + lf + ' 2>&1'
-        subprocess.Popen(cmd, shell=True).communicate()
-
-        # print warnings and errors to stdout
-        if os.path.getsize(lf):
-            print >> sys.stderr, "### ccheck failed for " \
+    def check_log(self, logfile, type, module, branch):
+        if os.path.getsize(logfile):
+            print >> sys.stderr, "### " + type + " failed for " \
                   + module + "/" + branch
-            f = open(lf, 'r')
+            f = open(logfile, 'r')
             for line in f:
                 sys.stderr.write(line)
             f.close()
@@ -121,6 +97,33 @@ class Build:
             cmd = 'echo \"Error: ' + dir + op + ' failed ('+str(ret)+')\" '\
                   '>> ' + lf + ' 2>&1'
             subprocess.Popen(cmd, shell=True).communicate()
+
+
+    def svn_update(self, svn_base, module, branch):
+        print "subversion update [%s, %s]..." % (module, branch)
+
+        if branch == 'trunk':
+            url = os.path.join(svn_base, module, 'trunk')
+        else:
+            url = os.path.join(svn_base, module, 'branches', branch)
+
+        path = os.path.join(self.svn_dir, branch, module)
+
+        svn = 'svn co ' + url + ' ' + path + '>>' + \
+              self.logfile('svn', module, branch) + ' 2>&1'
+        subprocess.Popen(svn, shell=True).communicate()
+
+
+    def run_ccheck(self, module, branch):
+        print "running ccheck [%s, %s]..." % (module, branch)
+
+        mod = os.path.join(self.svn_dir, branch, module)
+        lf = self.logfile('ccheck', module, branch)
+
+        cmd = 'cd ' + mod + '&&' + CCHECK + ' --quiet >>' + lf + ' 2>&1'
+        subprocess.Popen(cmd, shell=True).communicate()
+
+        self.check_log(lf, 'ccheck', module, branch)
 
 
     def build_binaries(self, module, branch):
@@ -149,7 +152,7 @@ class Build:
 
         self.run_op(dir, 'make splint', lf)
 
-        subprocess.Popen('cat ' + lf, shell=True).communicate()
+        self.check_log(lf, 'splint', module, branch)
 
 
     def run_doxygen(self, module, branch):
