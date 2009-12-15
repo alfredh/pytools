@@ -410,6 +410,9 @@ if __name__ == '__main__':
 
     config_file = sys.argv[1]
 
+    print 'running ' + sys.argv[0] + ' v' + VERSION + \
+          ' with config ' + config_file + ' on ' + HOSTNAME + '...'
+
     config = ConfigParser.ConfigParser()
     config.read(config_file)
 
