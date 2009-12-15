@@ -12,6 +12,7 @@
 #
 #  - collect list of errors, return non-zero if errors
 #  - multiple (cross) compilers
+#  - debian build gives some warnings/errors
 #
 
 import os, sys, platform, getpass, subprocess, shutil, time, re
@@ -171,17 +172,14 @@ class Build:
         dir = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('makedeb', module, branch)
 
-        if not os.path.exists(dir + '/debian'): return
+        if os.path.exists(dir + '/debian'):
+            self.run_op(dir, 'make deb', lf)
 
-        print "Found debian directory.."
-
-        self.run_op(dir, 'make deb', lf)
-
-        # print warnings and errors to stdout
-        subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
-                         shell=True).communicate()
-        subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
-                         shell=True).communicate()
+            # print warnings and errors to stdout
+            subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
+                             shell=True).communicate()
+            subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
+                             shell=True).communicate()
 
 
     # Make RPM package
@@ -191,17 +189,14 @@ class Build:
         dir = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('makerpm', module, branch)
 
-        if not os.path.exists(dir + '/rpm'): return
+        if os.path.exists(dir + '/rpm'):
+            self.run_op(dir, 'make rpm', lf)
 
-        print "Found rpm directory.."
-
-        self.run_op(dir, 'make rpm', lf)
-
-        # print warnings and errors to stdout
-        subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
-                         shell=True).communicate()
-        subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
-                         shell=True).communicate()
+            # print warnings and errors to stdout
+            subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
+                             shell=True).communicate()
+            subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
+                             shell=True).communicate()
 
 
     def run_tests(self, svn_base, mods):
