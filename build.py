@@ -10,7 +10,6 @@
 #
 # TODO:
 #
-#  - collect list of errors, return non-zero if errors
 #  - multiple (cross) compilers
 #  - debian build gives some warnings/errors
 #  - html-table output
@@ -31,6 +30,13 @@ USERNAME = getpass.getuser()
 UNAME    = os.uname()[3]
 CC_VER   = subprocess.Popen([CC, "--version"], stdout=subprocess.PIPE).\
            communicate()[0].split('\n')[0]
+
+
+def linecount(fname):
+    f = open(fname, 'r')
+    count = len(f.readlines())
+    f.close()
+    return count
 
 
 class Build:
@@ -57,8 +63,8 @@ class Build:
         self.do_splint  = config.getboolean('tests', 'do_splint')
 
         self.root_dir = root_dir
-        self.log_dir = self.root_dir + '/log'
-        self.svn_dir = self.root_dir + '/svn'
+        self.log_dir = os.path.join(self.root_dir, 'log')
+        self.svn_dir = os.path.join(self.root_dir, 'svn')
 
         self.clean_dir(self.log_dir)
 
@@ -78,13 +84,27 @@ class Build:
         return os.path.join(self.log_dir, f)
 
 
-    def check_log(self, logfile, type, module, branch):
+    def check_log(self, logfile, type, module, branch, pattern=None):
         if os.path.getsize(logfile):
-            print >> sys.stderr, "### " + type + " failed for " \
-                  + module + "/" + branch
+            heading = False
             f = open(logfile, 'r')
+
             for line in f:
-                sys.stderr.write(line)
+                if pattern is None:
+                    output = True
+                elif re.search(pattern, line):
+                    output = True
+                else:
+                    output = False
+
+                if output:
+                    if not heading:
+                        heading = True
+                        print >> sys.stderr, '----- ' + type \
+                              + ' failed for ' \
+                              + module + '/' + branch + ' -----'
+                    sys.stderr.write(line)
+
             f.close()
 
 
@@ -137,11 +157,7 @@ class Build:
         if self.do_install:
             self.run_op(path, 'make install CC=' + CC, lf)
 
-        # print warnings and errors to stdout
-        subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
-                         shell=True).communicate()
-        subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
-                         shell=True).communicate()
+        self.check_log(lf, 'binaries', module, branch, 'warning|error[ :]')
 
 
     def run_splint(self, module, branch):
@@ -165,11 +181,7 @@ class Build:
 
             self.run_op(path, 'make dox', lf)
 
-            # print warnings and errors to stdout
-            subprocess.Popen('grep -i warning ' + lf, \
-                             shell=True).communicate()
-            subprocess.Popen('grep -i error ' + lf, \
-                             shell=True).communicate()
+            self.check_log(lf, 'doxygen', module, branch, 'warning |error ')
 
 
     # Make Debian package
@@ -182,11 +194,7 @@ class Build:
         if os.path.exists(path + '/debian'):
             self.run_op(path, 'make deb', lf)
 
-            # print warnings and errors to stdout
-            subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
-                             shell=True).communicate()
-            subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
-                             shell=True).communicate()
+            self.check_log(lf, 'makedeb', module, branch, 'warning|error[ :]')
 
 
     # Make RPM package
@@ -199,11 +207,7 @@ class Build:
         if os.path.exists(path + '/rpm'):
             self.run_op(path, 'make rpm', lf)
 
-            # print warnings and errors to stdout
-            subprocess.Popen('grep -i \"warning[ :]\" ' + lf, \
-                             shell=True).communicate()
-            subprocess.Popen('grep -i \"error[ :]\" ' + lf, \
-                             shell=True).communicate()
+            self.check_log(lf, 'makerpm', module, branch, 'warning|error[ :]')
 
 
     def run_tests(self, svn_base, mods):
@@ -238,7 +242,6 @@ class Build:
 
 
     def parse_log(self, logfile):
-
         f = open(logfile, 'r')
 
         loghtml = logfile.replace(self.root_dir, '', 1)
@@ -271,13 +274,7 @@ class Build:
 
 
     def parse_ccheck(self, logfile):
-        f = open(logfile, 'r')
-
-        err = 0
-        for line in f:
-            err += 1
-
-        f.close()
+        err = linecount(logfile)
 
         if err > 0:
             return '<font color=\"#ff6666\">[Failed]</font>' + \
