@@ -22,14 +22,10 @@ import ConfigParser
 VERSION  = '0.8.0'
 SVN_CMD  = 'svn'
 LOGEXT   = 'txt'
-CC       = 'gcc'
-MAKE     = 'make'
 CCHECK   = '/usr/local/bin/ccheck.py'
 HOSTNAME = platform.node()
 USERNAME = getpass.getuser()
 UNAME    = os.uname()[3]
-CC_VER   = subprocess.Popen([CC, "--version"], stdout=subprocess.PIPE).\
-           communicate()[0].split('\n')[0]
 
 
 def linecount(fname):
@@ -62,6 +58,13 @@ class Build:
         self.do_doxygen = config.getboolean('tests', 'do_doxygen')
         self.do_splint  = config.getboolean('tests', 'do_splint')
 
+        self.make = config.get('core', 'make')
+        self.cc = config.get('core', 'cc')
+
+        self.cc_ver = subprocess.Popen([self.cc, "--version"], \
+                                       stdout=subprocess.PIPE).\
+                                       communicate()[0].split('\n')[0]
+
         self.root_dir = root_dir
         self.log_dir = os.path.join(self.root_dir, 'log')
         self.svn_dir = os.path.join(self.root_dir, 'svn')
@@ -92,7 +95,7 @@ class Build:
             for line in f:
                 if pattern is None:
                     output = True
-                elif re.search(pattern, line):
+                elif re.search(pattern, line, re.I):
                     output = True
                 else:
                     output = False
@@ -152,10 +155,10 @@ class Build:
         path = os.path.join(self.svn_dir, branch, module)
         lf = self.logfile('binaries', module, branch)
 
-        self.run_op(path, 'make CC=' + CC, lf)
+        self.run_op(path, self.make + ' CC=' + self.cc, lf)
 
         if self.do_install:
-            self.run_op(path, 'make install CC=' + CC, lf)
+            self.run_op(path, self.make + ' install CC=' + self.cc, lf)
 
         self.check_log(lf, 'binaries', module, branch, 'warning|error[ :]')
 
@@ -166,7 +169,7 @@ class Build:
         lf = self.logfile('splint', module, branch)
 
         self.run_op(os.path.join(self.svn_dir, branch, module),
-                    'make splint', lf)
+                    self.make + ' splint', lf)
 
         self.check_log(lf, 'splint', module, branch)
 
@@ -179,7 +182,7 @@ class Build:
         if os.path.isfile(path + '/mk/Doxyfile'):
             print "running doxygen [%s, %s]..." % (module, branch)
 
-            self.run_op(path, 'make dox', lf)
+            self.run_op(path, self.make + ' dox', lf)
 
             self.check_log(lf, 'doxygen', module, branch, 'warning |error ')
 
@@ -192,8 +195,7 @@ class Build:
         lf = self.logfile('makedeb', module, branch)
 
         if os.path.exists(path + '/debian'):
-            self.run_op(path, 'make deb', lf)
-
+            self.run_op(path, self.make + ' deb', lf)
             self.check_log(lf, 'makedeb', module, branch, 'warning|error[ :]')
 
 
@@ -205,7 +207,7 @@ class Build:
         lf = self.logfile('makerpm', module, branch)
 
         if os.path.exists(path + '/rpm'):
-            self.run_op(path, 'make rpm', lf)
+            self.run_op(path, self.make + ' rpm', lf)
 
             self.check_log(lf, 'makerpm', module, branch, 'warning|error[ :]')
 
@@ -360,7 +362,7 @@ class Build:
 
 
         f.write('<hr>\n')
-        f.write('Info:<br>' + CC_VER + '<br>' + UNAME + '<br>\n')
+        f.write('Info:<br>' + self.cc_ver + '<br>' + UNAME + '<br>\n')
 
         f.write('<hr>\n')
         f.write('<i>Generated ' + time.ctime() + ' by ' \
