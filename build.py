@@ -117,8 +117,8 @@ class Build:
         p.communicate()
         ret = p.returncode
         if ret != 0:
-            cmd = 'echo \"Error: ' + dir + op + ' failed ('+str(ret)+')\" '\
-                  '>> ' + lf + ' 2>&1'
+            cmd = 'echo \"Error: ' + dir + ' ' + op + ' failed (' \
+                  + str(ret) + ')\" ' '>> ' + lf + ' 2>&1'
             subprocess.Popen(cmd, shell=True).communicate()
 
 
