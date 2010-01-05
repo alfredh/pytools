@@ -396,7 +396,7 @@ def main():
     if not quiet:
         cc.print_stats()
 
-    exit(cc.errors != 0)
+    sys.exit(cc.errors != 0)
 
 
 if __name__ == "__main__":
