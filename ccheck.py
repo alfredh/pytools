@@ -2,7 +2,7 @@
 #
 # ccheck.py  Code Checker
 #
-# Copyright (C) 2005 - 2009 Alfred E. Heggestad
+# Copyright (C) 2005 - 2010 Alfred E. Heggestad
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License version 2 as
@@ -63,7 +63,8 @@ class ccheck:
             'm4':   [self.check_brackets, self.check_c_comments,
                      self.check_indent_tab],
             'py':   [self.check_brackets, self.check_indent_space],
-            'm':    [self.check_brackets, self.check_c_preprocessor],
+            'm':    [self.check_brackets, self.check_c_preprocessor,
+                     self.check_indent_tab],
             }
         self.extmap = {
             'c':    ['*.c'],
@@ -75,11 +76,13 @@ class ccheck:
             'm':    ['*.m'],
             }
         self.maxsize = {
-            'c':  (79, 3000),
-            'h':  (79, 1000),
-            'mk': (79, 1000),
-            'm4': (79, 3000),
-            'py': (79, 3000),
+            'c':    (79, 3000),
+            'h':    (79, 1000),
+            'cpp':  (79, 3000),
+            'mk':   (79, 1000),
+            'm4':   (79, 3000),
+            'py':   (79, 3000),
+            'm':    (79, 3000),
             }
 
 
@@ -380,8 +383,8 @@ def main():
 
     cc = ccheck()
 
-    if len(args) > 1:
-        for f in args[1:]:
+    if len(args) >= 1:
+        for f in args[0:]:
             if os.path.isdir(f):
                 cc.build_file_list(f)
             elif os.path.isfile(f):
