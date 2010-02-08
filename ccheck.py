@@ -321,19 +321,22 @@ class ccheck:
         print "unknown extension: " + f
 
 
-    def rec_quasiglob(self, top, patterns):
+    def rec_quasiglob(self, top, patterns, exclude):
         for root, dirs, files in os.walk(top, topdown=False):
             for f in files:
                 for pattern in patterns:
                     if fnmatch.fnmatch(f, pattern):
                         path = os.path.join(root, f)
-                        self.parse_any_file(path)
+                        if exclude and path.find(exclude) >= 0:
+                            pass
+                        else:
+                            self.parse_any_file(path)
 
 
-    def build_file_list(self, top):
+    def build_file_list(self, top, exclude):
         for e in self.extensions:
             em = self.extmap[e]
-            self.rec_quasiglob(top, em)
+            self.rec_quasiglob(top, em, exclude)
 
 
 ###
@@ -353,6 +356,7 @@ def usage():
     print "  -h --help     Display help"
     print "  -V --version  Show version info"
     print "  -q --quiet    Print warnings only"
+    print "  -e --exclude  Exclude pattern(s)"
 
 
 #
@@ -362,9 +366,11 @@ def usage():
 
 def main():
     quiet = False
+    exclude = None
     try:
         opts, args = getopt.getopt(sys.argv[1:], \
-                                   'hVq', ['help', 'version', 'quiet'])
+                                   'hVqe:',
+                                   ['help', 'version', 'quiet', 'exclude='])
     except getopt.GetoptError, err:
         print str(err)
         usage()
@@ -378,6 +384,8 @@ def main():
             sys.exit()
         elif o in ('-q', '--quiet'):
             quiet = True
+        elif o in ('-e', '--exclude'):
+            exclude = a
         else:
             assert False, "unhandled option"
 
@@ -386,14 +394,14 @@ def main():
     if len(args) >= 1:
         for f in args[0:]:
             if os.path.isdir(f):
-                cc.build_file_list(f)
+                cc.build_file_list(f, exclude)
             elif os.path.isfile(f):
                 cc.parse_any_file(f)
             else:
                 print "unknown file type: " + f
     else:
         # scan all files recursively
-        cc.build_file_list('.')
+        cc.build_file_list('.', exclude)
 
     # done - print stats
     if not quiet:
