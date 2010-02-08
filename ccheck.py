@@ -38,7 +38,7 @@ class ccheck:
         self.cur_lineno = 0
         self.empty_lines_count = 0
         self.files = {}
-        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py', 'm']
+        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py', 'm', 's']
 
         self.operators = ["do", "if", "for", "while", "switch"]
         self.re_tab  = re.compile('(\w+\W*)\(')
@@ -65,6 +65,7 @@ class ccheck:
             'py':   [self.check_brackets, self.check_indent_space],
             'm':    [self.check_brackets, self.check_c_preprocessor,
                      self.check_indent_tab],
+            's':   [self.check_indent_tab, self.check_c_preprocessor],
             }
         self.extmap = {
             'c':    ['*.c'],
@@ -74,6 +75,7 @@ class ccheck:
             'm4':   ['*.m4'],
             'py':   ['*.py'],
             'm':    ['*.m'],
+            's':    ['*.s', '*.S'],
             }
         self.maxsize = {
             'c':    (79, 3000),
@@ -83,6 +85,7 @@ class ccheck:
             'm4':   (79, 3000),
             'py':   (79, 3000),
             'm':    (79, 3000),
+            's':    (79, 3000),
             }
 
 
