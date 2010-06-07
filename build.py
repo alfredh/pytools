@@ -112,6 +112,8 @@ class Build:
 
 
     def run_op(self, dir, op, lf):
+        if dir:
+            os.makedirs(dir)
         cmd = 'cd ' + dir + ' && ' + op + ' >> ' + lf + ' 2>&1'
         p = subprocess.Popen(cmd, shell=True)
         p.communicate()
@@ -132,9 +134,10 @@ class Build:
 
         path = os.path.join(self.svn_dir, branch, module)
 
-        svn = 'svn co ' + url + ' ' + path + '>>' + \
-              self.logfile('svn', module, branch) + ' 2>&1'
-        subprocess.Popen(svn, shell=True).communicate()
+        lf = self.logfile('svn', module, branch)
+        self.run_op(path, 'svn co ' + url + ' ' + path, lf)
+
+        self.check_log(lf, 'svn', module, branch)
 
 
     def run_ccheck(self, module, branch):
