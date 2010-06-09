@@ -112,7 +112,7 @@ class Build:
 
 
     def run_op(self, dir, op, lf):
-        if dir:
+        if dir and not os.path.exists(dir):
             os.makedirs(dir)
         cmd = 'cd ' + dir + ' && ' + op + ' >> ' + lf + ' 2>&1'
         p = subprocess.Popen(cmd, shell=True)
