@@ -134,10 +134,9 @@ class Build:
 
         path = os.path.join(self.svn_dir, branch, module)
 
-        lf = self.logfile('svn', module, branch)
-        self.run_op(path, 'svn co ' + url + ' ' + path, lf)
-
-        self.check_log(lf, 'svn', module, branch)
+        lf = self.logfile(SVN_CMD, module, branch)
+        self.run_op(path, SVN_CMD + ' co ' + url + ' ' + path, lf)
+        self.check_log(lf, SVN_CMD, module, branch, 'error:')
 
 
     def run_ccheck(self, module, branch):
