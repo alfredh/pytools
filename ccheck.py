@@ -38,7 +38,7 @@ class ccheck:
         self.cur_lineno = 0
         self.empty_lines_count = 0
         self.files = {}
-        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py', 'm', 's']
+        self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py', 'm', 's', 'java']
 
         self.operators = ["do", "if", "for", "while", "switch"]
         self.re_tab  = re.compile('(\w+\W*)\(')
@@ -65,7 +65,8 @@ class ccheck:
             'py':   [self.check_brackets, self.check_indent_space],
             'm':    [self.check_brackets, self.check_c_preprocessor,
                      self.check_indent_tab],
-            's':   [self.check_indent_tab, self.check_c_preprocessor],
+            's':    [self.check_indent_tab, self.check_c_preprocessor],
+            'java': [self.check_brackets, self.check_indent_tab],
             }
         self.extmap = {
             'c':    ['*.c'],
@@ -76,6 +77,7 @@ class ccheck:
             'py':   ['*.py'],
             'm':    ['*.m'],
             's':    ['*.s', '*.S'],
+            'java': ['*.java'],
             }
         self.maxsize = {
             'c':    (79, 3000),
@@ -86,6 +88,7 @@ class ccheck:
             'py':   (79, 3000),
             'm':    (79, 3000),
             's':    (79, 3000),
+            'java': (179, 3000),
             }
 
 
@@ -130,6 +133,8 @@ class ccheck:
                 self.error("has trailing tab(s)")
 
         # check for empty lines count
+        if self.cur_lineno == 1:
+            self.empty_lines_count = 0
         if len == 0:
             self.empty_lines_count += 1
         else:
