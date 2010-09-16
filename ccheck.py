@@ -335,9 +335,12 @@ class ccheck:
                 for pattern in patterns:
                     if fnmatch.fnmatch(f, pattern):
                         path = os.path.join(root, f)
-                        if exclude and path.find(exclude) >= 0:
-                            pass
-                        else:
+                        parse = True
+                        for excl in exclude:
+                            if path.find(excl) >= 0:
+                                parse = False
+
+                        if parse:
                             self.parse_any_file(path)
 
 
@@ -374,7 +377,7 @@ def usage():
 
 def main():
     quiet = False
-    exclude = None
+    exclude = []
     try:
         opts, args = getopt.getopt(sys.argv[1:], \
                                    'hVqe:',
@@ -393,7 +396,7 @@ def main():
         elif o in ('-q', '--quiet'):
             quiet = True
         elif o in ('-e', '--exclude'):
-            exclude = a
+            exclude.append(a)
         else:
             assert False, "unhandled option"
 
