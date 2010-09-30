@@ -2,7 +2,7 @@
 #
 # build.py Build script
 #
-# Copyright 2005 - 2009 Alfred E. Heggestad. All rights reserved.
+# Copyright 2005 - 2010 Alfred E. Heggestad. All rights reserved.
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License version 2 as
@@ -20,7 +20,6 @@ import ConfigParser
 
 # constants
 VERSION  = '0.8.0'
-SVN_CMD  = 'svn'
 LOGEXT   = 'txt'
 CCHECK   = '/usr/local/bin/ccheck.py'
 HOSTNAME = platform.node()
@@ -60,6 +59,7 @@ class Build:
 
         self.make = config.get('core', 'make')
         self.cc = config.get('core', 'cc')
+        self.svn = config.get('core', 'svn')
 
         self.cc_ver = subprocess.Popen([self.cc, "--version"], \
                                        stdout=subprocess.PIPE).\
@@ -134,9 +134,9 @@ class Build:
 
         path = os.path.join(self.svn_dir, branch, module)
 
-        lf = self.logfile(SVN_CMD, module, branch)
-        self.run_op(path, SVN_CMD + ' co ' + url + ' ' + path, lf)
-        self.check_log(lf, SVN_CMD, module, branch, 'error:')
+        lf = self.logfile('svn', module, branch)
+        self.run_op(path, self.svn + ' co ' + url + ' ' + path, lf)
+        self.check_log(lf, 'svn', module, branch, 'error:')
 
 
     def run_ccheck(self, module, branch):
