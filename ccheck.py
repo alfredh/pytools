@@ -37,6 +37,7 @@ class ccheck:
         self.cur_filename = ''
         self.cur_lineno = 0
         self.empty_lines_count = 0
+        self.cc_count = 0
         self.files = {}
         self.extensions = ['c', 'cpp', 'h', 'mk', 'm4', 'py', 'm', 's', 'java']
 
@@ -193,15 +194,18 @@ class ccheck:
     #
     def check_c_comments(self, line, len):
 
+        if self.cur_lineno == 1:
+            self.cc_count = 0
+
         cc = False
 
         if line.find('/*') != -1:
-            if not re.search('[\'"]+.*/\*.*[\'"]+', line):
-                cc = True
+            self.cc_count += 1
 
         if line.find('*/') != -1:
-            if not re.search('[\'"]+.*\*/.*[\'"]+', line):
+            if self.cc_count > 0:
                 cc = True
+            self.cc_count = 0
 
         if cc:
             self.error("C comment, use Perl-style comments # ... instead");
