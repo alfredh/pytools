@@ -21,7 +21,7 @@ import os, sys, platform, getpass, subprocess, shutil, time, re
 import ConfigParser
 
 # constants
-VERSION  = '0.8.1'
+VERSION  = '0.8.2'
 LOGEXT   = 'txt'
 CCHECK   = '/usr/local/bin/ccheck.py'
 HOSTNAME = platform.node()
@@ -47,6 +47,8 @@ class Build:
     do_doxygen = 1
     do_splint = 1
 
+    cxx = 'g++'
+
     def __init__(self, root_dir, config):
         print "Build init: %s" % root_dir
 
@@ -61,6 +63,7 @@ class Build:
 
         self.make = config.get('core', 'make')
         self.cc = config.get('core', 'cc')
+        self.cxx = config.get('core', 'cxx')
         self.svn = config.get('core', 'svn')
         self.git = config.get('core', 'git')
 
@@ -163,7 +166,7 @@ class Build:
         path = os.path.join(self.src_dir, module)
         lf = self.logfile('binaries', module)
 
-        self.run_op(path, self.make + ' CC=' + self.cc, lf)
+        self.run_op(path, self.make + ' CC=' + self.cc + ' CXX=' + self.cxx, lf)
 
         self.check_log(lf, 'binaries', module, 'warning|error[ :]')
 
