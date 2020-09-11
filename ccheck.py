@@ -3,7 +3,7 @@
 # ccheck.py  Code Checker
 #
 # Copyright (C) 2005 - 2012 Alfred E. Heggestad
-# Copyright (C) 2010 - 2012 Creytiv.com
+# Copyright (C) 2010 - 2012 Richard Aas
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License version 2 as
